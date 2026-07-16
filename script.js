@@ -478,38 +478,25 @@ function renderProjectDescriptions(
             document.createElement("a");
 
           linkElement.className =
-            "project-description__link";
+            "project-description__text-link";
 
           linkElement.href = link;
           linkElement.target = "_blank";
           linkElement.rel =
             "noopener noreferrer";
 
+          linkElement.textContent =
+            "Click here";
+
           linkElement.setAttribute(
             "aria-label",
             linkLabel ||
-              "Open degrees and certificates"
+              "View degrees and certificates"
           );
 
           linkElement.title =
             linkLabel ||
-            "Open degrees and certificates";
-
-          linkElement.innerHTML = `
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path
-                d="M10.5 13.5a4 4 0 0 0 5.66 0l2.34-2.34a4 4 0 0 0-5.66-5.66L11.5 6.84"
-              ></path>
-
-              <path
-                d="M13.5 10.5a4 4 0 0 0-5.66 0L5.5 12.84a4 4 0 0 0 5.66 5.66l1.34-1.34"
-              ></path>
-            </svg>
-          `;
+            "View degrees and certificates";
 
           item.append(linkElement);
         }
