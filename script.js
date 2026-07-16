@@ -156,6 +156,8 @@ const pdfCache = new Map();
 let previousScrollY = 0;
 let previouslyFocusedElement = null;
 let activeRenderToken = 0;
+let activeProjectPath = "";
+let closeTimerId = null;
 
 function renderProjects() {
   const cards = projects.map((project) => {
@@ -176,7 +178,9 @@ function renderProjects() {
     `;
 
     card.append(preview, body);
-    card.addEventListener("click", () => openProject(project));
+    card.addEventListener("click", () => {
+      openProject(project);
+    });
     renderPdfThumbnail(project, preview);
     return card;
   });
@@ -219,18 +223,38 @@ async function renderPdfThumbnail(project, preview) {
 }
 
 function openProject(project) {
+  if (closeTimerId !== null) {
+    window.clearTimeout(closeTimerId);
+    closeTimerId = null;
+  }
+
   previousScrollY = window.scrollY;
   previouslyFocusedElement = document.activeElement;
 
   focusedTitle.textContent = project.name;
   focusedCategory.textContent = project.category || "Project";
+
   renderProjectDescriptions(project.descriptions || []);
   renderProjectTools(project.toolSections || []);
 
+  /*
+    Every project selection receives a unique render token.
+    This invalidates rendering work from previously selected PDFs.
+  */
+  activeRenderToken += 1;
+
+  const renderToken = activeRenderToken;
+  activeProjectPath = project.pdfPath;
+
+  /*
+    Clear the previous PDF immediately before opening the new one.
+  */
+  pdfPages.replaceChildren(
+    createLoadingMessage(project.name)
+  );
+
   focusedProject.hidden = false;
   document.body.classList.add("is-focused");
-  activeRenderToken = 1;
-  const renderToken = activeRenderToken;
 
   requestAnimationFrame(() => {
     focusedProject.classList.add("is-visible");
@@ -313,23 +337,89 @@ function renderProjectTools(toolSections) {
 
 
 async function renderPdfPages(project, renderToken) {
-  pdfPages.replaceChildren(createLoadingMessage(project.name));
-
   try {
-    const pdf = await getPdfDocument(project.pdfPath);
-    if (renderToken !== activeRenderToken) return;
+    const selectedPdfPath = project.pdfPath;
+    const pdf = await getPdfDocument(selectedPdfPath);
+
+    /*
+      Stop if another project was selected while this PDF
+      was loading.
+    */
+    if (
+      renderToken !== activeRenderToken ||
+      selectedPdfPath !== activeProjectPath
+    ) {
+      return;
+    }
 
     pdfPages.replaceChildren();
 
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber = 1) {
-      if (renderToken !== activeRenderToken) return;
+    for (
+      let pageNumber = 1;
+      pageNumber <= pdf.numPages;
+      pageNumber += 1
+    ) {
+      /*
+        Check before requesting every page.
+      */
+      if (
+        renderToken !== activeRenderToken ||
+        selectedPdfPath !== activeProjectPath
+      ) {
+        return;
+      }
+
       const page = await pdf.getPage(pageNumber);
-      const pageElement = await renderPdfPage(page, project, pageNumber);
+
+      /*
+        Check again because the selected project may have
+        changed while getPage() was running.
+      */
+      if (
+        renderToken !== activeRenderToken ||
+        selectedPdfPath !== activeProjectPath
+      ) {
+        return;
+      }
+
+      const pageElement = await renderPdfPage(
+        page,
+        project,
+        pageNumber
+      );
+
+      /*
+        Do not append a page from an old PDF after another
+        project has been selected.
+      */
+      if (
+        renderToken !== activeRenderToken ||
+        selectedPdfPath !== activeProjectPath
+      ) {
+        return;
+      }
+
       pdfPages.append(pageElement);
     }
   } catch (error) {
-    console.error(`Unable to render PDF for ${project.name}`, error);
-    pdfPages.replaceChildren(createErrorMessage(project.name));
+    /*
+      Do not show an error from an outdated render request.
+    */
+    if (
+      renderToken !== activeRenderToken ||
+      project.pdfPath !== activeProjectPath
+    ) {
+      return;
+    }
+
+    console.error(
+      `Unable to render PDF for ${project.name}`,
+      error
+    );
+
+    pdfPages.replaceChildren(
+      createErrorMessage(project.name)
+    );
   }
 }
 
@@ -401,18 +491,35 @@ function createErrorMessage(name) {
 }
 
 function closeProject() {
-  activeRenderToken = 1;
+  /*
+    Incrementing the token cancels the currently running
+    PDF rendering process.
+  */
+  activeRenderToken += 1;
+  activeProjectPath = "";
+
+  /*
+    Remove the current PDF immediately so it cannot appear
+    beneath the next selected project.
+  */
+  pdfPages.replaceChildren();
+
   focusedProject.classList.remove("is-visible");
   document.body.classList.remove("is-focused");
 
-  window.setTimeout(() => {
+  closeTimerId = window.setTimeout(() => {
     focusedProject.hidden = true;
-    pdfPages.replaceChildren();
-    window.scrollTo({ top: previousScrollY, behavior: "instant" });
 
-    if (previouslyFocusedElement) {
+    window.scrollTo({
+      top: previousScrollY,
+      behavior: "auto"
+    });
+
+    if (previouslyFocusedElement instanceof HTMLElement) {
       previouslyFocusedElement.focus();
     }
+
+    closeTimerId = null;
   }, 260);
 }
 
