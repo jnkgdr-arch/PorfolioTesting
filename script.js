@@ -21,7 +21,16 @@ const projects = [
     name: "About Me",
     pdfPath: "assets/about-me.pdf",
     category: "Introduction",
-    descriptions: [],
+    descriptions: [
+      {
+        heading: "Tools used",
+        text: "Codex, GitHub, and Vercel for project website building and coding.",
+      },
+      {
+        heading: "Design Tools",
+        text: "Canva and Adobe Photoshop as the design tools.",
+      },
+    ],
   },
   {
     name: "Procter & Gamble",
