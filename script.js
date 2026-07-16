@@ -29,7 +29,7 @@ const projects = [
     toolSections: [
       {
         heading: "Design Tools",
-        imagePath: "assets/design-tools.png",
+        imagePath: "assets/designs-tools.png",
         ariaLabel: "View design tools",
       },
       {
@@ -287,6 +287,20 @@ function renderProjectTools(toolSections) {
       image.src = imagePath;
       image.alt = "";
       image.loading = "lazy";
+
+      image.addEventListener("error", () => {
+        console.error(`Unable to load tool image: ${imagePath}`);
+
+        button.classList.add("has-image-error");
+        button.removeAttribute("href");
+        button.removeAttribute("target");
+
+        const errorText = document.createElement("span");
+        errorText.className = "tool-image-error";
+        errorText.textContent = "Image unavailable";
+
+        button.replaceChildren(errorText);
+      });
 
       button.append(image);
       section.append(headingElement, button);
