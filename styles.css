@@ -61,7 +61,7 @@ body {
   line-height: 1.5;
 }
 
-/* Large faded JG background logo */
+/* Large faded JG logo behind the homepage */
 body::before {
   content: "";
   position: fixed;
@@ -89,23 +89,41 @@ body::before {
   z-index: 1;
 }
 
-/* Main page header */
+/* Homepage header */
 .site-header {
   max-width: 1440px;
   margin: 0 auto;
   padding: 72px 24px 32px;
 }
 
-/* Small logo in the top-left of the opening page */
+/* Homepage logo and main heading */
+.homepage-brand {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2vw, 28px);
+}
+
 .site-corner-logo {
   display: block;
+  flex-shrink: 0;
 
-  width: 42px;
-  height: 42px;
-  margin-bottom: 22px;
+  width: clamp(52px, 7vw, 96px);
+  height: clamp(52px, 7vw, 96px);
+  margin: 0;
 
   object-fit: contain;
   clip-path: circle(41.2% at 50% 51%);
+}
+
+.site-header h1 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+
+  color: #f8fbff;
+  font-size: clamp(2.6rem, 7vw, 5.6rem);
+  line-height: 0.95;
+  letter-spacing: -0.07em;
 }
 
 .eyebrow,
@@ -118,22 +136,20 @@ body::before {
   text-transform: uppercase;
 }
 
-.site-header h1 {
-  margin: 10px 0 14px;
+.site-header .eyebrow {
+  margin: 24px 0 0;
 
-  color: #f8fbff;
-  font-size: clamp(2.6rem, 7vw, 5.6rem);
-  line-height: 0.95;
-  letter-spacing: -0.07em;
+  color: #9dccff;
 }
 
-.site-header .eyebrow {
-  color: #9dccff;
+.project-card__category,
+.focused-project__category {
+  margin: 0;
 }
 
 .intro {
   max-width: 680px;
-  margin: 0;
+  margin: 8px 0 0;
 
   color: #d8e8ff;
   font-size: 1.12rem;
@@ -198,7 +214,11 @@ body::before {
   min-height: 210px;
   overflow: hidden;
 
-  background: linear-gradient(135deg, #e8edff, #fff7ec);
+  background: linear-gradient(
+    135deg,
+    #e8edff,
+    #fff7ec
+  );
 }
 
 .project-card__preview canvas {
@@ -247,6 +267,7 @@ body::before {
   inset: 0;
   z-index: 10;
 
+  overflow: hidden;
   background: var(--site-background);
 
   opacity: 0;
@@ -303,7 +324,7 @@ body::before {
   transform: translateY(0);
 }
 
-/* Small logo and portfolio name in opened PDF view */
+/* Small logo and portfolio name in the PDF view */
 .focused-brand {
   position: fixed;
   top: 24px;
@@ -394,6 +415,19 @@ body::before {
   min-width: 0;
 }
 
+.pdf-message {
+  margin: 0;
+  padding: 24px;
+
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow);
+
+  color: var(--text);
+  font-weight: 700;
+}
+
 .pdf-page {
   position: relative;
 
@@ -436,7 +470,7 @@ body::before {
   background: rgba(49, 87, 213, 0.12);
 }
 
-/* Right-side project information */
+/* Project information panel */
 .project-info {
   position: sticky;
   top: 96px;
@@ -494,7 +528,7 @@ body::before {
   line-height: 1.6;
 }
 
-/* Project tool images */
+/* Tool images */
 .project-tools {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -608,13 +642,24 @@ body.is-focused {
 /* Mobile */
 @media (max-width: 620px) {
   .site-header {
-    padding-top: 52px;
+    padding: 52px 16px 28px;
+  }
+
+  .homepage-brand {
+    gap: 10px;
   }
 
   .site-corner-logo {
-    width: 34px;
-    height: 34px;
-    margin-bottom: 18px;
+    width: clamp(44px, 12vw, 60px);
+    height: clamp(44px, 12vw, 60px);
+  }
+
+  .site-header h1 {
+    font-size: clamp(2rem, 10vw, 3.2rem);
+  }
+
+  .site-header .eyebrow {
+    margin-top: 18px;
   }
 
   body::before,
@@ -629,6 +674,8 @@ body.is-focused {
 
   .portfolio-grid {
     grid-template-columns: 1fr;
+    padding-right: 16px;
+    padding-left: 16px;
   }
 
   .project-card {
@@ -665,7 +712,8 @@ body.is-focused {
     gap: 18px;
   }
 
-  .pdf-page {
+  .pdf-page,
+  .pdf-message {
     border-radius: 12px;
   }
 
