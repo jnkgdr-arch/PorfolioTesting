@@ -56,6 +56,51 @@ body > * {
   padding: 72px 24px 32px;
 }
 
+.brand-marquee {
+  width: 100%;
+  overflow: hidden;
+  background: transparent;
+  padding: 18px 0;
+}
+
+.brand-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: logo-scroll 25s linear infinite;
+}
+
+.brand-marquee__group {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: clamp(40px, 6vw, 80px);
+  padding-right: clamp(40px, 6vw, 80px);
+}
+
+.brand-marquee:hover .brand-marquee__track {
+  animation-play-state: paused;
+}
+
+.logo-marquee-image {
+  display: block;
+  width: clamp(140px, 14vw, 190px);
+  height: auto;
+  flex-shrink: 0;
+
+  /* Clip the original rectangular PNG around the navy circle. */
+  clip-path: circle(41.2% at 50% 51%);
+}
+
+@keyframes logo-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 .eyebrow,
 .project-card__category,
 .focused-project__category {
