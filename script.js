@@ -11,69 +11,105 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs
   Keep `pdfPath` pointed at the PDF that should open in the focused project view.
   Update `category` to change the smaller label above each project title.
 
-  Edit `additionalNames` for each PDF to add multiple names, titles, or labels
-  in the right-side panel. Leave `additionalNames: []` empty to hide that section.
+  Edit `descriptions` for each PDF to change the bold description header(s)
+  and smaller supporting description text in the right-side panel. Add one or
+  more `{ heading, text }` entries, or leave `descriptions: []` empty to hide
+  the section.
 */
 const projects = [
   {
     name: "About Me",
     pdfPath: "assets/about-me.pdf",
     category: "Introduction",
-    additionalNames: ["Personal Overview", "Background", "Portfolio Introduction"],
+    descriptions: [],
   },
   {
     name: "Procter & Gamble",
     pdfPath: "assets/procter-and-gamble.pdf",
     category: "Brand Strategy",
-    additionalNames: ["Consumer Goods", "Campaign Strategy", "Brand Analysis"],
+    descriptions: [
+      {
+        heading: "Designed P&G Go-To-Market Strategy & 12-Month Rollout Sub-line Product for Portfolio Growth",
+        text: "Conceptualized new-market haircare line for portfolio expansion using competitive analysis and a $898M to $1.796B budget estimate.",
+      },
+    ],
   },
   {
     name: "Chipotle",
     pdfPath: "assets/chipotle.pdf",
     category: "Marketing",
-    additionalNames: ["Restaurant Marketing", "Customer Experience", "Campaign Concept"],
+    descriptions: [
+      {
+        heading: "Researched Consumer Demand to Recommend Chipotle's Expansion into China",
+        text: "Analyzed customer preferences, cultural behaviors, and market opportunities to support localized decision-making.",
+      },
+    ],
   },
   {
     name: "GA4",
     pdfPath: "assets/ga-4.pdf",
     category: "Analytics",
-    additionalNames: ["Google Analytics 4", "Measurement", "Reporting"],
+    descriptions: [
+      {
+        heading: "Examined 318K New Users and $128.5K in Top-Product Revenue to Recommend Sales Strategies",
+        text: "Analyzed Google Merch Store performance in GA4 using KPI tracking, user engagement data, and e-commerce insights.",
+      },
+    ],
   },
   {
     name: "Global Tech Project Management",
     pdfPath: "assets/global-tech-project-management.pdf",
     category: "Project Management",
-    additionalNames: ["Global Technology", "Timeline Planning", "Cross-Functional Coordination"],
+    descriptions: [
+      {
+        heading: "Developed a Project Management Framework to Strengthen Governance, Risk Tracking, and Process Oversight",
+        text: "Analyzed project gaps, process risks, stakeholder needs, and reporting practices to recommend structured workflow improvements.",
+      },
+    ],
   },
   {
     name: "Research & Insights",
     pdfPath: "assets/research-and-insights.pdf",
     category: "Research",
-    additionalNames: ["Audience Research", "Insights Summary", "Strategic Findings"],
+    descriptions: [
+      {
+        heading: "Analyzed 500+ ABC Restaurant Survey Responses to Recommend Audience and Dining Strategies",
+        text: "Examined consumer survey data using Excel PivotTables to identify audience segments and recommend food, ambience, and outreach strategies.",
+      },
+      {
+        heading: "Compared GDP, Population, and Economic Freedom Across 15 Countries to Evaluate Market Conditions",
+        text: "Analyzed World Development Indicators and 2025 economic freedom metrics to compare national output, population scale, GDP per capita, and institutional conditions.",
+      },
+    ],
   },
   {
     name: "SEO & Keyword Search",
     pdfPath: "assets/seo-and-keyword-search.pdf",
     category: "SEO",
-    additionalNames: ["Keyword Research", "Search Strategy", "Optimization"],
+    descriptions: [
+      {
+        heading: "Tailored 6 Coleman Marketing Strategies Using Keyword Insights to Guide SEO Recommendations",
+        text: "Analyzed SEO trends, competition, bid ranges, and search changes to guide Coleman marketing recommendations.",
+      },
+    ],
   },
   {
     name: "Content Designs",
     pdfPath: "assets/content-designs.pdf",
     category: "Design",
-    additionalNames: ["Content Layouts", "Visual Design", "Creative Direction"],
+    descriptions: [],
   },
   {
     name: "Administrative Work & Inventory",
     pdfPath: "assets/administrative-work-and-inventory.pdf",
     category: "Operations",
-    additionalNames: ["Inventory Tracking", "Administrative Systems", "Process Support"],
+    descriptions: [],
   },
   {
     name: "Experience & Contact",
     pdfPath: "assets/experience-and-contact.pdf",
     category: "Contact",
-    additionalNames: ["Experience", "Resume Highlights", "Contact Details"],
+    descriptions: [],
   },
 ];
 
@@ -84,8 +120,7 @@ const focusedTitle = document.querySelector("#focused-project-title");
 const focusedCategory = document.querySelector("#focused-project-category");
 const pdfPages = document.querySelector("#pdf-pages");
 const backButton = document.querySelector("#back-button");
-const additionalNames = document.querySelector("#additional-names");
-const additionalNamesList = document.querySelector("#additional-names-list");
+const projectDescription = document.querySelector("#project-description");
 
 const pdfCache = new Map();
 let previousScrollY = 0;
@@ -159,7 +194,7 @@ function openProject(project) {
 
   focusedTitle.textContent = project.name;
   focusedCategory.textContent = project.category || "Project";
-  renderAdditionalNames(project.additionalNames || []);
+  renderProjectDescriptions(project.descriptions || []);
 
   focusedProject.hidden = false;
   document.body.classList.add("is-focused");
@@ -174,17 +209,33 @@ function openProject(project) {
   renderPdfPages(project, renderToken);
 }
 
-function renderAdditionalNames(names) {
-  additionalNamesList.replaceChildren(
-    ...names.map((name) => {
-      const item = document.createElement("li");
-      item.textContent = name;
+function renderProjectDescriptions(descriptions) {
+  const populatedDescriptions = descriptions.filter(({ heading, text }) => heading || text);
+
+  projectDescription.replaceChildren(
+    ...populatedDescriptions.map(({ heading, text }) => {
+      const item = document.createElement("section");
+      item.className = "project-description__item";
+
+      if (heading) {
+        const headingElement = document.createElement("h3");
+        headingElement.textContent = heading;
+        item.append(headingElement);
+      }
+
+      if (text) {
+        const textElement = document.createElement("p");
+        textElement.textContent = text;
+        item.append(textElement);
+      }
+
       return item;
     }),
   );
 
-  additionalNames.hidden = names.length === 0;
+  projectDescription.hidden = populatedDescriptions.length === 0;
 }
+
 
 async function renderPdfPages(project, renderToken) {
   pdfPages.replaceChildren(createLoadingMessage(project.name));
