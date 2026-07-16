@@ -132,35 +132,36 @@ const projects = [
     descriptions: [],
   },
   {
-   {
-  name: "Experience & Contact",
-  pdfPath: "assets/experience-and-contact.pdf",
-  category: "Contact",
-  descriptions: [
-    {
-      heading: "Core Skills",
-      text:
-        "Digital Marketing, Content Creation, Project Management, Competitive Analysis, Campaign Support.",
-    },
-    {
-      heading: "Technical Skills",
-      text:
-        "Canva, Adobe Photoshop, Microsoft Office Suite, Google Analytics 4, HootSuite.",
-    },
-    {
-      heading: "Soft Skills",
-      text:
-        "Communication, Collaboration, Attention to Detail, Problem Solving, Adaptability.",
-    },
-    {
-      heading: "Degrees & Certificates",
-      link:
-        "https://drive.google.com/drive/folders/1JLaXqjosYUGntsv1EYa1kr3qqxCpnmxN?usp=sharing",
-      linkLabel:
-        "View degrees and certificates",
-    },
-  ],
-},
+    name: "Experience & Contact",
+    pdfPath: "assets/experience-and-contact.pdf",
+    category: "Contact",
+    descriptions: [
+      {
+        heading: "Core Skills",
+        text:
+          "Digital Marketing, Content Creation, Project Management, Competitive Analysis, Campaign Support.",
+      },
+      {
+        heading: "Technical Skills",
+        text:
+          "Canva, Adobe Photoshop, Microsoft Office Suite, Google Analytics 4, HootSuite.",
+      },
+      {
+        heading: "Soft Skills",
+        text:
+          "Communication, Collaboration, Attention to Detail, Problem Solving, Adaptability.",
+      },
+      {
+        heading: "Degrees & Certificates",
+        link:
+          "https://drive.google.com/drive/folders/1JLaXqjosYUGntsv1EYa1kr3qqxCpnmxN?usp=sharing",
+        linkLabel:
+          "View degrees and certificates in Google Drive",
+      },
+    ],
+  },
+];
+
 const grid = document.querySelector("#portfolio-grid");
 const focusedProject = document.querySelector("#focused-project");
 
@@ -405,11 +406,9 @@ function openProject(project) {
 
   activeRenderToken += 1;
 
-  const renderToken =
-    activeRenderToken;
+  const renderToken = activeRenderToken;
 
-  activeProjectPath =
-    project.pdfPath;
+  activeProjectPath = project.pdfPath;
 
   pdfPages.replaceChildren(
     createLoadingMessage(project.name)
@@ -437,13 +436,18 @@ function renderProjectDescriptions(
 ) {
   const populatedDescriptions =
     descriptions.filter(
-      ({ heading, text }) =>
-        heading || text
+      ({ heading, text, link }) =>
+        heading || text || link
     );
 
   projectDescription.replaceChildren(
     ...populatedDescriptions.map(
-      ({ heading, text }) => {
+      ({
+        heading,
+        text,
+        link,
+        linkLabel,
+      }) => {
         const item =
           document.createElement("section");
 
@@ -467,6 +471,47 @@ function renderProjectDescriptions(
           textElement.textContent = text;
 
           item.append(textElement);
+        }
+
+        if (link) {
+          const linkElement =
+            document.createElement("a");
+
+          linkElement.className =
+            "project-description__link";
+
+          linkElement.href = link;
+          linkElement.target = "_blank";
+          linkElement.rel =
+            "noopener noreferrer";
+
+          linkElement.setAttribute(
+            "aria-label",
+            linkLabel ||
+              "Open degrees and certificates"
+          );
+
+          linkElement.title =
+            linkLabel ||
+            "Open degrees and certificates";
+
+          linkElement.innerHTML = `
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                d="M10.5 13.5a4 4 0 0 0 5.66 0l2.34-2.34a4 4 0 0 0-5.66-5.66L11.5 6.84"
+              ></path>
+
+              <path
+                d="M13.5 10.5a4 4 0 0 0-5.66 0L5.5 12.84a4 4 0 0 0 5.66 5.66l1.34-1.34"
+              ></path>
+            </svg>
+          `;
+
+          item.append(linkElement);
         }
 
         return item;
