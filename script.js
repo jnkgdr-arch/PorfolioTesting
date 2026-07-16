@@ -1,23 +1,80 @@
+import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+
 /*
   EDITABLE PROJECT DATA
   ---------------------
-  Replace placeholder `name` values with polished project titles as needed.
-  Keep `pdfPath` pointed at the PDF that should open in the focused viewer.
-  Add `previewImagePath` values when you have first-page preview images; leave
-  them blank to show the generated placeholder card artwork.
-  Update optional `category` values to group or label projects.
+  Change each `name` value below to edit the primary project title shown on the
+  card and at the top of the right-side information panel.
+
+  Keep `pdfPath` pointed at the PDF that should open in the focused project view.
+  Update `category` to change the smaller label above each project title.
+
+  Edit `additionalNames` for each PDF to add multiple names, titles, or labels
+  in the right-side panel. Leave `additionalNames: []` empty to hide that section.
 */
 const projects = [
-  { name: "About Me", pdfPath: "assets/about-me.pdf", previewImagePath: "", category: "Introduction" },
-  { name: "Procter & Gamble", pdfPath: "assets/procter-and-gamble.pdf", previewImagePath: "", category: "Brand Strategy" },
-  { name: "Chipotle", pdfPath: "assets/chipotle.pdf", previewImagePath: "", category: "Marketing" },
-  { name: "GA4", pdfPath: "assets/ga-4.pdf", previewImagePath: "", category: "Analytics" },
-  { name: "Global Tech Project Management", pdfPath: "assets/global-tech-project-management.pdf", previewImagePath: "", category: "Project Management" },
-  { name: "Research & Insights", pdfPath: "assets/research-and-insights.pdf", previewImagePath: "", category: "Research" },
-  { name: "SEO & Keyword Search", pdfPath: "assets/seo-and-keyword-search.pdf", previewImagePath: "", category: "SEO" },
-  { name: "Content Designs", pdfPath: "assets/content-designs.pdf", previewImagePath: "", category: "Design" },
-  { name: "Administrative Work & Inventory", pdfPath: "assets/administrative-work-and-inventory.pdf", previewImagePath: "", category: "Operations" },
-  { name: "Experience & Contact", pdfPath: "assets/experience-and-contact.pdf", previewImagePath: "", category: "Contact" },
+  {
+    name: "About Me",
+    pdfPath: "assets/about-me.pdf",
+    category: "Introduction",
+    additionalNames: ["Personal Overview", "Background", "Portfolio Introduction"],
+  },
+  {
+    name: "Procter & Gamble",
+    pdfPath: "assets/procter-and-gamble.pdf",
+    category: "Brand Strategy",
+    additionalNames: ["Consumer Goods", "Campaign Strategy", "Brand Analysis"],
+  },
+  {
+    name: "Chipotle",
+    pdfPath: "assets/chipotle.pdf",
+    category: "Marketing",
+    additionalNames: ["Restaurant Marketing", "Customer Experience", "Campaign Concept"],
+  },
+  {
+    name: "GA4",
+    pdfPath: "assets/ga-4.pdf",
+    category: "Analytics",
+    additionalNames: ["Google Analytics 4", "Measurement", "Reporting"],
+  },
+  {
+    name: "Global Tech Project Management",
+    pdfPath: "assets/global-tech-project-management.pdf",
+    category: "Project Management",
+    additionalNames: ["Global Technology", "Timeline Planning", "Cross-Functional Coordination"],
+  },
+  {
+    name: "Research & Insights",
+    pdfPath: "assets/research-and-insights.pdf",
+    category: "Research",
+    additionalNames: ["Audience Research", "Insights Summary", "Strategic Findings"],
+  },
+  {
+    name: "SEO & Keyword Search",
+    pdfPath: "assets/seo-and-keyword-search.pdf",
+    category: "SEO",
+    additionalNames: ["Keyword Research", "Search Strategy", "Optimization"],
+  },
+  {
+    name: "Content Designs",
+    pdfPath: "assets/content-designs.pdf",
+    category: "Design",
+    additionalNames: ["Content Layouts", "Visual Design", "Creative Direction"],
+  },
+  {
+    name: "Administrative Work & Inventory",
+    pdfPath: "assets/administrative-work-and-inventory.pdf",
+    category: "Operations",
+    additionalNames: ["Inventory Tracking", "Administrative Systems", "Process Support"],
+  },
+  {
+    name: "Experience & Contact",
+    pdfPath: "assets/experience-and-contact.pdf",
+    category: "Contact",
+    additionalNames: ["Experience", "Resume Highlights", "Contact Details"],
+  },
 ];
 
 const grid = document.querySelector("#portfolio-grid");
@@ -25,14 +82,18 @@ const focusedProject = document.querySelector("#focused-project");
 const focusedPanel = focusedProject.querySelector(".focused-project__panel");
 const focusedTitle = document.querySelector("#focused-project-title");
 const focusedCategory = document.querySelector("#focused-project-category");
-const pdfViewer = document.querySelector("#pdf-viewer");
+const pdfPages = document.querySelector("#pdf-pages");
 const backButton = document.querySelector("#back-button");
+const additionalNames = document.querySelector("#additional-names");
+const additionalNamesList = document.querySelector("#additional-names-list");
 
+const pdfCache = new Map();
 let previousScrollY = 0;
 let previouslyFocusedElement = null;
+let activeRenderToken = 0;
 
 function renderProjects() {
-  const cards = projects.map((project, index) => {
+  const cards = projects.map((project) => {
     const card = document.createElement("button");
     card.type = "button";
     card.className = "project-card";
@@ -40,19 +101,7 @@ function renderProjects() {
 
     const preview = document.createElement("div");
     preview.className = "project-card__preview";
-
-    if (project.previewImagePath) {
-      const image = document.createElement("img");
-      image.src = project.previewImagePath;
-      image.alt = `${project.name} first-page preview`;
-      image.loading = "lazy";
-      preview.append(image);
-    } else {
-      const placeholder = document.createElement("div");
-      placeholder.className = "project-card__placeholder";
-      placeholder.textContent = String(index + 1).padStart(2, "0");
-      preview.append(placeholder);
-    }
+    preview.append(createPreviewPlaceholder(project.name));
 
     const body = document.createElement("div");
     body.className = "project-card__body";
@@ -63,10 +112,45 @@ function renderProjects() {
 
     card.append(preview, body);
     card.addEventListener("click", () => openProject(project));
+    renderPdfThumbnail(project, preview);
     return card;
   });
 
   grid.replaceChildren(...cards);
+}
+
+function createPreviewPlaceholder(name) {
+  const placeholder = document.createElement("div");
+  placeholder.className = "project-card__placeholder";
+  placeholder.textContent = name;
+  return placeholder;
+}
+
+async function getPdfDocument(pdfPath) {
+  if (!pdfCache.has(pdfPath)) {
+    pdfCache.set(pdfPath, pdfjsLib.getDocument(pdfPath).promise);
+  }
+
+  return pdfCache.get(pdfPath);
+}
+
+async function renderPdfThumbnail(project, preview) {
+  try {
+    const pdf = await getPdfDocument(project.pdfPath);
+    const page = await pdf.getPage(1);
+    const viewport = page.getViewport({ scale: 0.45 });
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    canvas.width = Math.floor(viewport.width);
+    canvas.height = Math.floor(viewport.height);
+    canvas.setAttribute("aria-hidden", "true");
+
+    await page.render({ canvasContext: context, viewport }).promise;
+    preview.replaceChildren(canvas);
+  } catch (error) {
+    console.error(`Unable to render thumbnail for ${project.name}`, error);
+  }
 }
 
 function openProject(project) {
@@ -75,31 +159,129 @@ function openProject(project) {
 
   focusedTitle.textContent = project.name;
   focusedCategory.textContent = project.category || "Project";
-  pdfViewer.replaceChildren(createPdfEmbed(project));
+  renderAdditionalNames(project.additionalNames || []);
 
   focusedProject.hidden = false;
   document.body.classList.add("is-focused");
+  activeRenderToken += 1;
+  const renderToken = activeRenderToken;
+
   requestAnimationFrame(() => {
     focusedProject.classList.add("is-visible");
     focusedPanel.focus();
   });
+
+  renderPdfPages(project, renderToken);
 }
 
-function createPdfEmbed(project) {
-  const iframe = document.createElement("iframe");
-  iframe.src = project.pdfPath;
-  iframe.title = `${project.name} PDF`;
-  iframe.loading = "lazy";
-  return iframe;
+function renderAdditionalNames(names) {
+  additionalNamesList.replaceChildren(
+    ...names.map((name) => {
+      const item = document.createElement("li");
+      item.textContent = name;
+      return item;
+    }),
+  );
+
+  additionalNames.hidden = names.length === 0;
+}
+
+async function renderPdfPages(project, renderToken) {
+  pdfPages.replaceChildren(createLoadingMessage(project.name));
+
+  try {
+    const pdf = await getPdfDocument(project.pdfPath);
+    if (renderToken !== activeRenderToken) return;
+
+    pdfPages.replaceChildren();
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      if (renderToken !== activeRenderToken) return;
+      const page = await pdf.getPage(pageNumber);
+      const pageElement = await renderPdfPage(page, project, pageNumber);
+      pdfPages.append(pageElement);
+    }
+  } catch (error) {
+    console.error(`Unable to render PDF for ${project.name}`, error);
+    pdfPages.replaceChildren(createErrorMessage(project.name));
+  }
+}
+
+async function renderPdfPage(page, project, pageNumber) {
+  const pageElement = document.createElement("article");
+  pageElement.className = "pdf-page";
+  pageElement.setAttribute("aria-label", `${project.name} page ${pageNumber}`);
+
+  const unscaledViewport = page.getViewport({ scale: 1 });
+  const availableWidth = pdfPages.clientWidth || 900;
+  const scale = availableWidth / unscaledViewport.width;
+  const viewport = page.getViewport({ scale });
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  canvas.width = Math.floor(viewport.width);
+  canvas.height = Math.floor(viewport.height);
+
+  const annotationLayer = document.createElement("div");
+  annotationLayer.className = "annotationLayer";
+  annotationLayer.setAttribute("aria-label", `${project.name} page ${pageNumber} links`);
+
+  pageElement.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
+  pageElement.append(canvas, annotationLayer);
+
+  await page.render({ canvasContext: context, viewport }).promise;
+  const annotations = await page.getAnnotations({ intent: "display" });
+  renderAnnotationLinks(annotations, annotationLayer, viewport);
+
+  return pageElement;
+}
+
+function renderAnnotationLinks(annotations, annotationLayer, viewport) {
+  annotations
+    .filter((annotation) => annotation.subtype === "Link" && (annotation.url || annotation.unsafeUrl))
+    .forEach((annotation) => {
+      const rect = viewport.convertToViewportRectangle(annotation.rect);
+      const left = Math.min(rect[0], rect[2]);
+      const top = Math.min(rect[1], rect[3]);
+      const width = Math.abs(rect[0] - rect[2]);
+      const height = Math.abs(rect[1] - rect[3]);
+      const link = document.createElement("a");
+
+      link.href = annotation.url || annotation.unsafeUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.title = annotation.contents || "Open project link in a new tab";
+      link.style.left = `${left}px`;
+      link.style.top = `${top}px`;
+      link.style.width = `${width}px`;
+      link.style.height = `${height}px`;
+
+      annotationLayer.append(link);
+    });
+}
+
+function createLoadingMessage(name) {
+  const message = document.createElement("p");
+  message.className = "pdf-message";
+  message.textContent = `Loading ${name}…`;
+  return message;
+}
+
+function createErrorMessage(name) {
+  const message = document.createElement("p");
+  message.className = "pdf-message";
+  message.textContent = `Unable to load ${name}. Please check the PDF path and try again.`;
+  return message;
 }
 
 function closeProject() {
+  activeRenderToken += 1;
   focusedProject.classList.remove("is-visible");
   document.body.classList.remove("is-focused");
 
   window.setTimeout(() => {
     focusedProject.hidden = true;
-    pdfViewer.replaceChildren();
+    pdfPages.replaceChildren();
     window.scrollTo({ top: previousScrollY, behavior: "instant" });
 
     if (previouslyFocusedElement) {
