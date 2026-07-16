@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portfolio Projects</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf_viewer.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" type="module"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <p class="eyebrow">Portfolio</p>
+      <h1>Selected Projects</h1>
+      <p class="intro">
+        Browse the project collection below. Select any card to view the full
+        PDF without leaving this page.
+      </p>
+    </header>
+
+    <main id="main-content">
+      <section
+        class="portfolio-grid"
+        id="portfolio-grid"
+        aria-label="Portfolio project grid"
+      ></section>
+    </main>
+
+    <section
+      class="focused-project"
+      id="focused-project"
+      aria-labelledby="focused-project-title"
+      aria-modal="true"
+      role="dialog"
+      hidden
+    >
+      <div class="focused-project__panel" tabindex="-1">
+        <button class="back-button" id="back-button" type="button">
+          Back to All Projects
+        </button>
+
+        <div class="project-detail">
+          <section class="pdf-pages" id="pdf-pages" aria-label="Rendered PDF pages"></section>
+
+          <aside class="project-info" aria-labelledby="focused-project-title">
+            <p class="focused-project__category" id="focused-project-category"></p>
+            <h2 id="focused-project-title">Project title</h2>
+            <div class="project-description" id="project-description" hidden></div>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
